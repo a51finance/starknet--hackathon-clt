@@ -1,0 +1,29 @@
+[package]
+name = "cltbase"
+version = "0.0.1"
+
+
+# See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+casm-add-pythonic-hints = true
+allowed-libfuncs-list.name = "all"
+build-external-contracts = [
+    "openzeppelin::presets::erc20::ERC20",
+    "jediswap_v2_core::jediswap_v2_pool::JediSwapV2Pool",
+    "jediswap_v2_core::jediswap_v2_factory::JediSwapV2Factory",
+    "jediswap_v2_periphery::jediswap_v2_nft_position_manager::JediSwapV2NFTPositionManager"
+]
+
+
+[dependencies]
+starknet = "2.6.3"
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.20.1" }
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.10.0" }
+jediswap_v2_core = { git = "https://github.com/jediswaplabs/JediSwap-v2-core.git", branch = "5-bug-fixes" }
+jediswap_v2_periphery = { git = "https://github.com/jediswaplabs/JediSwap-v2-periphery.git", branch = "5-bug-fixes" }
+
+[scripts]
+test = "snforge test"
