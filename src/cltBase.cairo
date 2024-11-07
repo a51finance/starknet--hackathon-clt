@@ -3,41 +3,16 @@
 use starknet::ContractAddress;
 
 use cltbase::interfaces::IcltBase::CLTInterfaces::{
-    ICLTBase, StrategyKey, PositionActions, StrategyPayload
+    ICLTBase, StrategyKey, PositionActions, StrategyPayload, Account, StrategyData, StrategyCreated,
 };
 
-#[derive(Copy, Drop, Serde, Hash, starknet::Store)]
-struct Account {
-    fee0: u256,
-    fee1: u256,
-    balance0: u256,
-    balance1: u256,
-    total_shares: u256,
-    jediswap_liquidity: u128,
-    fee_growth_inside0_last_x128: u256,
-    fee_growth_inside1_last_x128: u256,
-    fee_growth_outside0_last_x128: u256,
-    fee_growth_outside1_last_x128: u256,
-}
-
-
-#[derive(Copy, Drop, Serde, Hash, starknet::Store)]
-struct StrategyData {
-    key: StrategyKey,
-    owner: ContractAddress,
-    actions: felt252,
-    action_status: felt252,
-    is_compound: bool,
-    is_private: bool,
-    management_fee: u256,
-    performance_fee: u256,
-    account: Account,
-}
 
 // Base Contract
 #[starknet::contract]
 mod cltBase {
-    use super::{StrategyKey, StrategyPayload, PositionActions, Account};
+    use super::{
+        StrategyKey, StrategyData, StrategyCreated, StrategyPayload, PositionActions, Account
+    };
 
     // Poseidon hashing
     use core::poseidon::poseidon_hash_span;
@@ -58,18 +33,6 @@ mod cltBase {
         jediswap_v2_pool::{IJediSwapV2PoolDispatcher, IJediSwapV2PoolDispatcherTrait},
     };
 
-    #[derive(Copy, Drop, Serde, Hash, starknet::Store)]
-    struct StrategyData {
-        key: StrategyKey,
-        owner: ContractAddress,
-        actions: felt252,
-        action_status: felt252,
-        is_compound: bool,
-        is_private: bool,
-        management_fee: u256,
-        performance_fee: u256,
-        account: Account,
-    }
 
     #[storage]
     struct Storage {
@@ -86,12 +49,6 @@ mod cltBase {
     #[derive(Drop, starknet::Event)]
     enum Event {
         StrategyCreated: StrategyCreated
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct StrategyCreated {
-        #[key] // Mark this as an indexed field, similar to `indexed` in Solidity
-        strategy_id: felt252,
     }
 
     #[constructor]
