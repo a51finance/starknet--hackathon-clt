@@ -2,18 +2,9 @@
 // A51 Finance
 use starknet::ContractAddress;
 
-#[derive(Copy, Drop, Serde, Hash, starknet::Store)]
-struct StrategyKey {
-    pool: ContractAddress,
-    tick_lower: i32,
-    tick_upper: i32,
-}
-
-#[derive(Drop, Serde)]
-struct StrategyPayload {
-    action_name: felt252, // Equivalent to bytes32 in Solidity
-    data: Array<felt252>, // Equivalent to bytes in Solidity
-}
+use cltbase::interfaces::IcltBase::CLTInterfaces::{
+    ICLTBase, StrategyKey, PositionActions, StrategyPayload
+};
 
 #[derive(Copy, Drop, Serde, Hash, starknet::Store)]
 struct Account {
@@ -29,13 +20,6 @@ struct Account {
     fee_growth_outside1_last_x128: u256,
 }
 
-#[derive(Drop, Serde)]
-struct PositionActions {
-    mode: u256,
-    exit_strategy: Array<StrategyPayload>, // Array of exit strategies
-    rebase_strategy: Array<StrategyPayload>, // Array of rebase strategies
-    liquidity_distribution: Array<StrategyPayload> // Array of liquidity distribution strategies
-}
 
 #[derive(Copy, Drop, Serde, Hash, starknet::Store)]
 struct StrategyData {
@@ -48,21 +32,6 @@ struct StrategyData {
     management_fee: u256,
     performance_fee: u256,
     account: Account,
-}
-
-// Interfaces
-
-#[starknet::interface]
-trait ICLTBase<TContractState> {
-    fn create_strategy(
-        ref self: TContractState,
-        key: StrategyKey,
-        actions: PositionActions,
-        management_fee: u256,
-        performance_fee: u256,
-        is_compound: bool,
-        is_private: bool
-    );
 }
 
 // Base Contract
