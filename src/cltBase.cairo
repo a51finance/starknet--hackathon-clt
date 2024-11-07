@@ -23,6 +23,7 @@ mod cltBase {
         get_block_timestamp, get_block_number, syscalls::keccak_syscall,
     };
 
+     
     // OpenZeppelin imports for ERC20 handling
     use openzeppelin::token::erc20::{
         ERC20Component, ERC20ABIDispatcher, interface::{ERC20ABIDispatcherTrait, IERC20Metadata},
@@ -52,9 +53,10 @@ mod cltBase {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress,) {
+    fn constructor(ref self: ContractState, owner: ContractAddress, governance_fee_handler_address: ContractAddress,) {
         self.owner.write(owner); // Set the owner during contract deployment
         self._shares_Id.write(1);
+        self.governance_fee_handler_address.write(governance_fee_handler_address);
     }
 
     fn generate_strategy_id(ref self: ContractState) -> felt252 {
@@ -117,7 +119,9 @@ mod cltBase {
         };
         self.strategies.write(strategy_id, strategy_data);
 
+
         // add governance handler
+
 
         self.emit(StrategyCreated { strategy_id });
     }
