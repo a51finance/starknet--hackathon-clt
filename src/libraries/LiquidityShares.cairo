@@ -1,14 +1,14 @@
 mod LiquidityShares {
     use jediswap_v2_core::libraries::full_math::{mul_div};
-    use cltbase::CLT_Base::CLTBase;
+    use cltbase::cltBase::cltBase;
     use cltbase::{
-        CLT_Base::CLTBase::StrategyKey, Errors::Errors,
+        interfaces::IcltBase::CLTInterfaces::StrategyKey, Errors::Errors,
         libraries::{Constants::Constants, PoolActions::PoolActions}
     };
     use jediswap_v2_periphery::libraries::{liquidity_amounts::LiquidityAmounts};
 
 
-    fn get_reserves(key: CLTBase::StrategyKey, liquidity: u128,) -> (u256, u256) {
+    fn get_reserves(key: cltBase::StrategyKey, liquidity: u128,) -> (u256, u256) {
         // Update the pool position for the given strategy key
         // PoolActions::update_position(key);
 
@@ -32,7 +32,7 @@ mod LiquidityShares {
 
 
     fn compute_liquidity_share(
-        strategy: CLTBase::StrategyData, amount0_max: u256, amount1_max: u256,
+        strategy: cltBase::StrategyData, amount0_max: u256, amount1_max: u256,
     ) -> (u256, u256, u256) {
         // Retrieve existing liquidity reserves
         let (mut reserve0, mut reserve1) = get_reserves(

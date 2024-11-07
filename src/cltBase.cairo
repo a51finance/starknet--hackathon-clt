@@ -17,13 +17,24 @@ mod cltBase {
     // Poseidon hashing
     use core::poseidon::poseidon_hash_span;
 
+    use cltbase::{
+        Errors::Errors,
+        Governance_fee_handler::{
+            IGovernanceFeeHandlerDispatcher, IGovernanceFeeHandlerDispatcherTrait
+        },
+        libraries::{
+            LiquidityShares::LiquidityShares, Constants::Constants, PoolActions::PoolActions,
+            StrategyFeeShare::StrategyFeeShares::{GlobalAccount}
+        },
+    };
+
     // Starknet imports
     use starknet::{
         contract_address::ContractAddress, ClassHash, get_caller_address, get_contract_address,
         get_block_timestamp, get_block_number, syscalls::keccak_syscall,
     };
 
-     
+
     // OpenZeppelin imports for ERC20 handling
     use openzeppelin::token::erc20::{
         ERC20Component, ERC20ABIDispatcher, interface::{ERC20ABIDispatcherTrait, IERC20Metadata},
@@ -41,6 +52,7 @@ mod cltBase {
         _shares_Id: u256,
         governance_fee_handler_address: ContractAddress,
         strategies: LegacyMap<felt252, StrategyData>,
+        strategyGlobalFees: LegacyMap<felt252, GlobalAccount>,
         #[substorage(v0)]
         erc20: ERC20Component::Storage
     }
@@ -53,7 +65,11 @@ mod cltBase {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress, governance_fee_handler_address: ContractAddress,) {
+    fn constructor(
+        ref self: ContractState,
+        owner: ContractAddress,
+        governance_fee_handler_address: ContractAddress,
+    ) {
         self.owner.write(owner); // Set the owner during contract deployment
         self._shares_Id.write(1);
         self.governance_fee_handler_address.write(governance_fee_handler_address);
@@ -75,6 +91,26 @@ mod cltBase {
         // encoding the hash
         let strategy_id = poseidon_hash_span(strategyIDHash.span());
         strategy_id
+    }
+
+    fn get_global_account(self: @ContractState, key: StrategyKey,) -> GlobalAccount {
+        let mut hash_data = array![];
+        Serde::serialize(@key.pool, ref hash_data);
+        Serde::serialize(@key.tick_lower, ref hash_data);
+        Serde::serialize(@key.tick_upper, ref hash_data);
+        let key_hash = poseidon_hash_span(hash_data.span());
+
+        self.strategyGlobalFees.read(key_hash)
+    }
+
+    fn set_global_account(ref self: ContractState, key: StrategyKey, account: GlobalAccount) {
+        let mut hash_data = array![];
+        Serde::serialize(@key.pool, ref hash_data);
+        Serde::serialize(@key.tick_lower, ref hash_data);
+        Serde::serialize(@key.tick_upper, ref hash_data);
+        let key_hash = poseidon_hash_span(hash_data.span());
+
+        self.strategyGlobalFees.write(key_hash, account);
     }
 
     // Create Strategy 
@@ -119,9 +155,14 @@ mod cltBase {
         };
         self.strategies.write(strategy_id, strategy_data);
 
+        let governance_handler: IGovernanceFeeHandlerDispatcher = IGovernanceFeeHandlerDispatcher {
+            contract_address: self.governance_fee_handler_address.read()
+        };
+
+        let (_, strategy_creation_fee_amount, _, _) = governance_handler
+            .get_governance_fee(is_private);
 
         // add governance handler
-
 
         self.emit(StrategyCreated { strategy_id });
     }

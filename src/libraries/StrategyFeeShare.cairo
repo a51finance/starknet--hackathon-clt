@@ -10,9 +10,11 @@ mod StrategyFeeShares {
     // Poseidon hashing
     use core::poseidon::poseidon_hash_span;
 
+
     // CLTBase-specific imports
     use cltbase::{
-        CLT_Base::ICLTBase, CLT_Base::CLTBase::{StrategyKey, ContractState, StrategyData},
+        interfaces::IcltBase::CLTInterfaces, cltBase::cltBase::ContractState,
+        interfaces::IcltBase::CLTInterfaces::{StrategyKey, StrategyData},
         CLTPayments::CLTPayments::{MintCallbackData}, Errors::Errors,
         Governance_fee_handler::{
             IGovernanceFeeHandlerDispatcher, IGovernanceFeeHandlerDispatcherTrait
@@ -55,7 +57,7 @@ mod StrategyFeeShares {
         // Serialize the StrategyKey to generate a unique hash
 
         // Retrieve the existing GlobalAccount entry from storage using the hash
-        let mut account = ICLTBase::get_global_account(@self, key);
+        let mut account = CLTInterfaces::ICLTBase::get_global_account(@self, key);
 
         // Update the position within PoolActions
         PoolActions::update_position(key);
@@ -79,7 +81,7 @@ mod StrategyFeeShares {
         }
 
         // Write the updated account back to the contract's storage
-        ICLTBase::set_global_account(ref self, key, account);
+        CLTInterfaces::ICLTBase::set_global_account(ref self, key, account);
 
         account
     }

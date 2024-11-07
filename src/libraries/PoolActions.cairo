@@ -17,7 +17,10 @@ mod PoolActions {
     use jediswap_v2_periphery::libraries::liquidity_amounts::LiquidityAmounts;
 
     // CLTBase-specific imports
-    use cltbase::{CLT_Base::CLTBase::StrategyKey, Errors::Errors, libraries::Constants::Constants};
+    use cltbase::{
+        interfaces::IcltBase::CLTInterfaces::StrategyKey, Errors::Errors,
+        libraries::Constants::Constants
+    };
 
     // Starknet imports
     use starknet::{contract_address::ContractAddress, get_contract_address};

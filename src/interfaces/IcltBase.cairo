@@ -6,6 +6,9 @@ pub mod CLTInterfaces {
         get_block_timestamp, get_block_number, syscalls::keccak_syscall,
     };
 
+    use cltbase::{libraries::{StrategyFeeShare::StrategyFeeShares::{GlobalAccount}}};
+
+
     #[derive(Copy, Drop, Serde, Hash, starknet::Store)]
     struct StrategyKey {
         pool: ContractAddress,
@@ -72,5 +75,8 @@ pub mod CLTInterfaces {
             is_compound: bool,
             is_private: bool
         );
+        fn get_global_account(self: @TContractState, key: StrategyKey) -> GlobalAccount;
+
+        fn set_global_account(ref self: TContractState, key: StrategyKey, account: GlobalAccount);
     }
 }
