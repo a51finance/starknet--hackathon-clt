@@ -2,7 +2,7 @@ mod LiquidityShares {
     use jediswap_v2_core::libraries::full_math::{mul_div};
     use cltbase::cltBase::cltBase;
     use cltbase::{
-        interfaces::IcltBase::CLTInterfaces::StrategyKey, Errors::Errors,
+        cltBase::cltBase::StrategyKey, Errors::Errors,
         libraries::{Constants::Constants, PoolActions::PoolActions}
     };
     use jediswap_v2_periphery::libraries::{liquidity_amounts::LiquidityAmounts};

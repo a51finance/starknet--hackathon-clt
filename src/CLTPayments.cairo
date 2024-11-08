@@ -1,18 +1,18 @@
+// SPDX-License-Identifier: UNLICENSED
+
 #[starknet::contract]
 mod CLTPayments {
     use core::traits::Into;
     use jediswap_v2_core::jediswap_v2_factory::{
         IJediSwapV2FactoryDispatcher, IJediSwapV2FactoryDispatcherTrait
     };
-    use cltbase::{
-        interfaces::IcltBase::CLTInterfaces::StrategyKey, Errors::Errors,
-        libraries::Constants::Constants
-    };
+    use cltbase::{cltBase::cltBase::StrategyKey, Errors::Errors, libraries::Constants::Constants};
     use starknet::{contract_address::ContractAddress, get_contract_address, get_caller_address};
     use jediswap_v2_periphery::libraries::periphery_payments::PeripheryPayments::pay;
     use jediswap_v2_core::libraries::signed_integers::{
         i32::i32, i256::i256, integer_trait::IntegerTrait
     };
+
 
     use jediswap_v2_core::{
         jediswap_v2_pool::{IJediSwapV2PoolDispatcher, IJediSwapV2PoolDispatcherTrait},
@@ -27,9 +27,11 @@ mod CLTPayments {
         IGovernanceFeeHandlerDispatcher, IGovernanceFeeHandlerDispatcherTrait
     };
 
+
     use openzeppelin::token::erc20::interface::{
         IERC20Dispatcher, IERC20DispatcherTrait, IERC20CamelDispatcher, IERC20CamelDispatcherTrait
     };
+
 
     #[storage]
     struct Storage {
@@ -50,6 +52,7 @@ mod CLTPayments {
         token0: ContractAddress,
         token1: ContractAddress,
         fee: u32,
+        zero_for_one: bool,
     }
 
     #[constructor]
@@ -93,6 +96,19 @@ mod CLTPayments {
             pay(decoded_data.token1, get_contract_address(), caller, amount1_delta.mag);
         }
     }
+
+    fn transfer_funds(
+        refund_as_eth: bool, recipient: ContractAddress, token: ContractAddress, amount: u256,
+    ) {
+        // If refund_as_eth is true, handle as ETH transfer, otherwise use ERC20
+        if refund_as_eth {
+            pay(token, get_contract_address(), recipient, amount);
+        } else {
+            let token_dispatcher = IERC20Dispatcher { contract_address: token };
+            token_dispatcher.transfer(recipient, amount);
+        }
+    }
+
 
     fn transfer_fee(
         key: StrategyKey,
@@ -146,4 +162,12 @@ mod CLTPayments {
 
         (fee0, fee1)
     }
+// fn _verify_callback(
+//     ref self: ContractState, token0: ContractAddress, token1: ContractAddress, fee: u256
+// ) {
+//     let pool = self.factory.get_pool(token0, token1, fee);
+//     assert(get_caller_address() == pool, "Unauthorized callback");
+// }
+
 }
+

@@ -7,7 +7,7 @@ mod PoolActions {
         jediswap_v2_factory::{IJediSwapV2FactoryDispatcher, IJediSwapV2FactoryDispatcherTrait},
         jediswap_v2_pool::{IJediSwapV2PoolDispatcher, IJediSwapV2PoolDispatcherTrait},
         libraries::{
-            signed_integers::i32::i32, full_math::{mul_div},
+            signed_integers::{i32::i32, i256::i256}, full_math::{mul_div},
             tick_math::TickMath::get_sqrt_ratio_at_tick, sqrt_price_math::SqrtPriceMath,
             sqrt_price_math::SqrtPriceMath::{Q96, Q128,}, position,
         }
@@ -18,8 +18,8 @@ mod PoolActions {
 
     // CLTBase-specific imports
     use cltbase::{
-        interfaces::IcltBase::CLTInterfaces::StrategyKey, Errors::Errors,
-        libraries::Constants::Constants
+        cltBase::cltBase::StrategyKey, Errors::Errors, libraries::Constants::Constants,
+        utils::{helpers::HelperFunctions::{u256_to_u128},}
     };
 
     // Starknet imports
@@ -141,6 +141,32 @@ mod PoolActions {
     }
 
 
+    // Function to swap tokens in the pool
+    fn swap_token(
+        pool: ContractAddress,
+        zero_for_one: bool,
+        amount_specified: i256,
+        sqrt_price_limit_x96: u256,
+        swap_callback_data: Array<felt252>,
+    ) -> (i256, i256) {
+        // Create the pool dispatcher instance with the provided pool address
+        let pool_dispatcher = IJediSwapV2PoolDispatcher { contract_address: pool };
+
+        // Call the swap function on the pool, passing the parameters and serialized callback data
+        let (amount0, amount1) = pool_dispatcher
+            .swap(
+                get_contract_address(),
+                zero_for_one,
+                amount_specified,
+                sqrt_price_limit_x96,
+                swap_callback_data
+            );
+
+        // Return the amounts swapped
+        (amount0, amount1)
+    }
+
+
     fn get_liquidity_for_amounts(key: StrategyKey, amount0: u256, amount1: u256) -> u128 {
         let pool_dispatcher = IJediSwapV2PoolDispatcher { contract_address: key.pool };
         let sqrt_price_x96 = pool_dispatcher.get_sqrt_price_X96();
@@ -230,36 +256,45 @@ mod PoolActions {
         (collect0.into(), collect1.into())
     }
 
-    // compounding is not included as of yet
-    // // Compound collected fees to add liquidity
-    // fn compound_fees(key: StrategyKey, balance0: u256, balance1: u256,) -> (u128, u256, u256) {
-    //     let (collect0, collect1) = collect_pending_fees(
-    //         key, Constants::MAX_UINT128, Constants::MAX_UINT128, get_contract_address()
-    //     );
-
-    //     let total0 = collect0 + balance0;
-    //     let total1 = collect1 + balance1;
-
-    //     // Mint liquidity with collected fees
-    //     let liquidity = get_liquidity_for_amounts(key, total0, total1);
-    //     if liquidity > 0 {
-    //         let (new_liquidity, amount0, amount1) = mint_liquidity(key, total0, total1);
-    //         let balance0_after_mint = total0 - amount0;
-    //         let balance1_after_mint = total1 - amount1;
-    //         (new_liquidity, balance0_after_mint, balance1_after_mint)
-    //     } else {
-    //         (0.into(), balance0, balance1)
-    //     }
-    // }
-
-    fn u256_to_u128(value: u256) -> Result<u128, felt252> {
-        if value.high == 0 {
-            // If the high part is 0, the value can fit in a u128
-            Result::Ok(value.low.try_into().unwrap())
+    // Function to calculate amounts directionally based on the swap direction
+    fn amounts_direction(
+        zero_for_one: bool,
+        amount0_received: u256,
+        amount1_received: u256,
+        amount0: u256,
+        amount1: u256,
+    ) -> (u256, u256) {
+        let (reserves0, reserves1) = if zero_for_one {
+            // If zeroForOne is true, adjust reserves as per the first direction
+            (amount0_received - amount0, amount1_received + amount1)
         } else {
-            // If the high part is not 0, the value is too large for u128
-            Result::Err('Value too large for u128')
-        }
+            // If zeroForOne is false, adjust reserves as per the second direction
+            (amount0_received + amount0, amount1_received - amount1)
+        };
+
+        (reserves0, reserves1)
     }
+// compounding is not included as of yet
+// // Compound collected fees to add liquidity
+// fn compound_fees(key: StrategyKey, balance0: u256, balance1: u256,) -> (u128, u256, u256) {
+//     let (collect0, collect1) = collect_pending_fees(
+//         key, Constants::MAX_UINT128, Constants::MAX_UINT128, get_contract_address()
+//     );
+
+//     let total0 = collect0 + balance0;
+//     let total1 = collect1 + balance1;
+
+//     // Mint liquidity with collected fees
+//     let liquidity = get_liquidity_for_amounts(key, total0, total1);
+//     if liquidity > 0 {
+//         let (new_liquidity, amount0, amount1) = mint_liquidity(key, total0, total1);
+//         let balance0_after_mint = total0 - amount0;
+//         let balance1_after_mint = total1 - amount1;
+//         (new_liquidity, balance0_after_mint, balance1_after_mint)
+//     } else {
+//         (0.into(), balance0, balance1)
+//     }
+// }
+
 }
 

@@ -1,8 +1,7 @@
 mod cltBase;
-mod interfaces;
-mod CLTPayments;
-mod Errors;
 mod Governance_fee_handler;
+mod Errors;
+mod CLTPayments;
 
 mod libraries {
     mod LiquidityShares;
@@ -10,5 +9,13 @@ mod libraries {
     mod PoolActions;
     mod Position;
     mod Constants;
+    mod UserPositions;
 }
 
+mod interfaces {
+    mod interfaces;
+}
+
+mod utils {
+    mod helpers;
+}
